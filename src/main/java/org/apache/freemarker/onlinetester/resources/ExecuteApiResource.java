@@ -55,9 +55,9 @@ import freemarker.template.utility.StringUtil;
  */
 @Path("/api/execute")
 public class ExecuteApiResource {
-    private static final int MAX_TEMPLATE_INPUT_LENGTH = 10000;
+    private static final int MAX_TEMPLATE_INPUT_LENGTH = 10000000;
 
-    private static final int MAX_DATA_MODEL_INPUT_LENGTH = 10000;
+    private static final int MAX_DATA_MODEL_INPUT_LENGTH = 10000000;
 
     private static final String MAX_TEMPLATE_INPUT_LENGTH_EXCEEDED_ERROR_MESSAGE
             = "The template length has exceeded the {0} character limit set for this service.";
@@ -74,7 +74,7 @@ public class ExecuteApiResource {
 
     public static final int DEFAULT_TAG_SYNTAX = Configuration.ANGLE_BRACKET_TAG_SYNTAX;
     public static final int DEFAULT_INTERPLOATION_SYNTAX = Configuration.LEGACY_INTERPOLATION_SYNTAX;
-    
+
     private final FreeMarkerService freeMarkerService;
 
     public ExecuteApiResource(FreeMarkerService freeMarkerService) {
@@ -87,13 +87,13 @@ public class ExecuteApiResource {
     public Response formResult(
             ExecuteRequest req) {
         ExecuteResponse resp = new ExecuteResponse();
-        
+
         if (StringUtils.isBlank(req.getTemplate()) && StringUtils.isBlank(req.getDataModel())) {
             return Response.status(400).entity("Empty Template & data").build();
         }
 
         List<ExecuteResponseProblem> problems = new ArrayList<>();
-        
+
         ExecuteTemplateArgs serviceArgs = new ExecuteTemplateArgs()
         		.templateSourceCode(lengthCheckAndGetTemplate(req, problems))
         		.dataModel(parseDataModel(req, problems))
@@ -117,12 +117,12 @@ public class ExecuteApiResource {
 		        		ExecuteRequest.Field.INTERPOLATION_SYNTAX, req.getInterpolationSyntax(),
 		        		AllowedSettingValues.DEFAULT_INTERPOLATION_SYNTAX, AllowedSettingValues.INTERPOLATION_SYNTAX_MAP,
 		        		problems));
-        
+
         if (!problems.isEmpty()) {
             resp.setProblems(problems);
             return buildFreeMarkerResponse(resp);
         }
-        
+
         FreeMarkerServiceResponse serviceResponse;
         try {
             serviceResponse = freeMarkerService.executeTemplate(serviceArgs);
@@ -163,7 +163,7 @@ public class ExecuteApiResource {
             problems.add(new ExecuteResponseProblem(ExecuteRequest.Field.DATA_MODEL, error));
             return null;
         }
-        
+
         try {
             return DataModelParser.parse(dataModel, freeMarkerService.getFreeMarkerTimeZone());
         } catch (DataModelParsingException e) {
@@ -177,7 +177,7 @@ public class ExecuteApiResource {
         if (StringUtils.isBlank(rawValue)) {
             return defaultValue;
         }
-        
+
         T parsedValue = rawToParsedMap.get(rawValue);
         if (parsedValue == null) {
             problems.add(new ExecuteResponseProblem(name,
@@ -189,13 +189,13 @@ public class ExecuteApiResource {
     private Response buildFreeMarkerResponse(ExecuteResponse executeResponse){
         return Response.ok().entity(executeResponse).build();
     }
-    
+
     private String decorateResultText(String resultText) {
         return DATA_MODEL_ERROR_MESSAGE_HEADING + "\n\n" + resultText + "\n\n" + DATA_MODEL_ERROR_MESSAGE_FOOTER;
     }
-    
+
     private String formatMessage(String key, Object... params) {
         return new MessageFormat(key, Locale.US).format(params);
     }
-    
+
 }
